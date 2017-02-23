@@ -18,10 +18,7 @@ package net.signbit.tools.atomizer;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -35,8 +32,16 @@ public class Atomizer
 
       loadClasses(zipFile);
 
+      ArrayList<HashSet<ClassRef>> connectedComponents = findConnectedComponents(localClasses.values());
+      System.out.println("Found " + connectedComponents.size() + " connected components");
+      for (HashSet<ClassRef> connComp: connectedComponents)
+      {
+         System.out.println("   " + connComp.size());
+      }
+      System.out.println();
+
       //displayAllClasses();
-      List<ClassRef> buildOrder = computeBuildOrder();
+      List<ClassRef> buildOrder = computeBuildOrder(localClasses.values());
       for (ClassRef cr: buildOrder)
       {
          System.out.println(cr.getClassName());
@@ -81,16 +86,61 @@ public class Atomizer
       }
    }
 
-   private static ArrayList<ClassRef> computeBuildOrder()
+   private static ArrayList<HashSet<ClassRef>> findConnectedComponents(Collection<ClassRef> refs)
    {
-      ArrayList<ClassRef> result = new ArrayList<ClassRef>();
-
-      for (ClassRef cr: localClasses.values())
+      for (ClassRef cr: refs)
       {
          cr.markNew();
       }
 
-      for (ClassRef cr: localClasses.values())
+      ArrayList<HashSet<ClassRef>> connectedComponents = new ArrayList<HashSet<ClassRef>>();
+
+      HashSet<ClassRef> currentComponent = new HashSet<ClassRef>();
+
+      for (ClassRef cr: refs)
+      {
+         if (cr.isNew())
+         {
+            cr.markFinal();
+            visitConnectedComponent(cr, currentComponent);
+         }
+
+         connectedComponents.add(currentComponent);
+
+         currentComponent = new HashSet<ClassRef>();
+      }
+
+      return connectedComponents;
+   }
+
+   private static void visitConnectedComponent(ClassRef cr, HashSet<ClassRef> currentComponent)
+   {
+      currentComponent.add(cr);
+
+      for (String dependentClassName: cr.getDependencies())
+      {
+         ClassRef dependentClass = localClasses.get(dependentClassName);
+         if (dependentClass != null)
+         {
+            if (dependentClass.isNew())
+            {
+               cr.markFinal();
+               visitConnectedComponent(cr, currentComponent);
+            }
+         }
+      }
+   }
+
+   private static ArrayList<ClassRef> computeBuildOrder(Collection<ClassRef> refs)
+   {
+      ArrayList<ClassRef> result = new ArrayList<ClassRef>();
+
+      for (ClassRef cr: refs)
+      {
+         cr.markNew();
+      }
+
+      for (ClassRef cr: refs)
       {
          if (cr.isNew())
          {
