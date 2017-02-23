@@ -69,10 +69,13 @@ public class ClassRef
             dependsOn.add(excClass.replace('/', '.'));
          }
 
-         for (Object lon: methodNode.localVariables)
+         if (null != methodNode.localVariables)
          {
-            LocalVariableNode localVariableNode = (LocalVariableNode) lon;
-            dependsOn.add(Type.getType(localVariableNode.desc).getClassName());
+            for (Object lon : methodNode.localVariables)
+            {
+               LocalVariableNode localVariableNode = (LocalVariableNode) lon;
+               dependsOn.add(Type.getType(localVariableNode.desc).getClassName());
+            }
          }
       }
 

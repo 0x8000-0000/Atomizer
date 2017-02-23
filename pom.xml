@@ -58,7 +58,10 @@
                <mainClass>net.signbit.tools.atomizer.DumpClassReferences</mainClass>
                -->
                <arguments>
+                  <!--
                   <argument>${project.build.directory}/${project.artifactId}-${project.version}.jar</argument>
+                  -->
+                  <argument>/home/florin/.m2/repository/org/mortbay/jetty/jetty/6.1.25/jetty-6.1.25.jar</argument>
                </arguments>
             </configuration>
          </plugin>

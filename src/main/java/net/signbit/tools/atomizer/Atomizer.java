@@ -18,8 +18,10 @@ package net.signbit.tools.atomizer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -33,6 +35,16 @@ public class Atomizer
 
       loadClasses(zipFile);
 
+      //displayAllClasses();
+      List<ClassRef> buildOrder = computeBuildOrder();
+      for (ClassRef cr: buildOrder)
+      {
+         System.out.println(cr.getClassName());
+      }
+   }
+
+   private static void displayAllClasses()
+   {
       for (ClassRef cr: localClasses.values())
       {
          System.out.println(cr.getClassName());
@@ -66,6 +78,51 @@ public class Atomizer
 
             localClasses.put(cr.getClassName(), cr);
          }
+      }
+   }
+
+   private static ArrayList<ClassRef> computeBuildOrder()
+   {
+      ArrayList<ClassRef> result = new ArrayList<ClassRef>();
+
+      for (ClassRef cr: localClasses.values())
+      {
+         cr.markNew();
+      }
+
+      for (ClassRef cr: localClasses.values())
+      {
+         if (cr.isNew())
+         {
+            visit(cr, result);
+         }
+      }
+
+      return result;
+   }
+
+   private static void visit(ClassRef cr, ArrayList<ClassRef> result)
+   {
+      if (cr.isTemporary())
+      {
+         throw new RuntimeException("Cycle found");
+      }
+
+      if (cr.isNew())
+      {
+         cr.markTemporary();
+
+         for (String dependentClassName: cr.getDependencies())
+         {
+            ClassRef dependentClass = localClasses.get(dependentClassName);
+            if (dependentClass != null)
+            {
+               visit(dependentClass, result);
+            }
+         }
+
+         cr.markFinal();
+         result.add(cr);
       }
    }
 }
