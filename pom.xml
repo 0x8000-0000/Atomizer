@@ -53,7 +53,10 @@
 
             <configuration>
                <includeProjectDependencies>true</includeProjectDependencies>
+               <mainClass>net.signbit.tools.atomizer.Atomizer</mainClass>
+               <!--
                <mainClass>net.signbit.tools.atomizer.DumpClassReferences</mainClass>
+               -->
                <arguments>
                   <argument>${project.build.directory}/${project.artifactId}-${project.version}.jar</argument>
                </arguments>
