@@ -16,6 +16,14 @@
 
 package net.signbit.tools.atomizer;
 
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.alg.CycleDetector;
+import org.jgrapht.alg.KosarajuStrongConnectivityInspector;
+import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedSubgraph;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -26,31 +34,46 @@ public class Atomizer
 {
    private static HashMap<String, ClassRef> localClasses;
 
+   private static DirectedGraph<ClassRef, DefaultEdge> classGraph;
+
    public static void main(String[] args) throws IOException
    {
       ZipFile zipFile = new ZipFile(args[0]);
 
       loadClasses(zipFile);
 
-      ArrayList<HashSet<ClassRef>> connectedComponents = findConnectedComponents(localClasses.values());
-      System.out.println("Found " + connectedComponents.size() + " connected components");
-      for (HashSet<ClassRef> connComp: connectedComponents)
+      StrongConnectivityAlgorithm<ClassRef, DefaultEdge> scAlg =
+            new KosarajuStrongConnectivityInspector<>(classGraph);
+      List<Set<ClassRef>> stronglyConnectedSubgraphs =
+            scAlg.stronglyConnectedSets();
+
+      System.out.println("Strongly connected components:");
+      for (Set<ClassRef> scc: stronglyConnectedSubgraphs)
       {
-         System.out.println("   " + connComp.size());
+         if (scc.size() > 1)
+         {
+            System.out.println("   " + scc.size() + " " + scc);
+         }
+      }
+      System.out.println();
+
+      CycleDetector<ClassRef, DefaultEdge> cycleDetector = new CycleDetector<>(classGraph);
+      Set<ClassRef> cycles = cycleDetector.findCycles();
+
+      System.out.println("Classed that participate in dependency cycles:");
+      for (ClassRef cr: cycles)
+      {
+         System.out.println("   " + cr);
       }
       System.out.println();
 
       //displayAllClasses();
-      List<ClassRef> buildOrder = computeBuildOrder(localClasses.values());
-      for (ClassRef cr: buildOrder)
-      {
-         System.out.println(cr.getClassName());
-      }
+
    }
 
    private static void displayAllClasses()
    {
-      for (ClassRef cr: localClasses.values())
+      for (ClassRef cr : localClasses.values())
       {
          System.out.println(cr.getClassName());
          for (String name : cr.getDependencies())
@@ -84,95 +107,25 @@ public class Atomizer
             localClasses.put(cr.getClassName(), cr);
          }
       }
-   }
 
-   private static ArrayList<HashSet<ClassRef>> findConnectedComponents(Collection<ClassRef> refs)
-   {
-      for (ClassRef cr: refs)
+      classGraph = new DefaultDirectedGraph<ClassRef, DefaultEdge>(DefaultEdge.class);
+
+      for (ClassRef cr : localClasses.values())
       {
-         cr.markNew();
+         classGraph.addVertex(cr);
       }
 
-      ArrayList<HashSet<ClassRef>> connectedComponents = new ArrayList<HashSet<ClassRef>>();
-
-      HashSet<ClassRef> currentComponent = new HashSet<ClassRef>();
-
-      for (ClassRef cr: refs)
+      for (ClassRef cr : localClasses.values())
       {
-         if (cr.isNew())
-         {
-            cr.markFinal();
-            visitConnectedComponent(cr, currentComponent);
-         }
-
-         connectedComponents.add(currentComponent);
-
-         currentComponent = new HashSet<ClassRef>();
-      }
-
-      return connectedComponents;
-   }
-
-   private static void visitConnectedComponent(ClassRef cr, HashSet<ClassRef> currentComponent)
-   {
-      currentComponent.add(cr);
-
-      for (String dependentClassName: cr.getDependencies())
-      {
-         ClassRef dependentClass = localClasses.get(dependentClassName);
-         if (dependentClass != null)
-         {
-            if (dependentClass.isNew())
-            {
-               cr.markFinal();
-               visitConnectedComponent(cr, currentComponent);
-            }
-         }
-      }
-   }
-
-   private static ArrayList<ClassRef> computeBuildOrder(Collection<ClassRef> refs)
-   {
-      ArrayList<ClassRef> result = new ArrayList<ClassRef>();
-
-      for (ClassRef cr: refs)
-      {
-         cr.markNew();
-      }
-
-      for (ClassRef cr: refs)
-      {
-         if (cr.isNew())
-         {
-            visit(cr, result);
-         }
-      }
-
-      return result;
-   }
-
-   private static void visit(ClassRef cr, ArrayList<ClassRef> result)
-   {
-      if (cr.isTemporary())
-      {
-         throw new RuntimeException("Cycle found");
-      }
-
-      if (cr.isNew())
-      {
-         cr.markTemporary();
-
-         for (String dependentClassName: cr.getDependencies())
+         for (String dependentClassName : cr.getDependencies())
          {
             ClassRef dependentClass = localClasses.get(dependentClassName);
-            if (dependentClass != null)
+            if (null != dependentClass)
             {
-               visit(dependentClass, result);
+               classGraph.addEdge(cr, dependentClass);
             }
          }
-
-         cr.markFinal();
-         result.add(cr);
       }
    }
+
 }

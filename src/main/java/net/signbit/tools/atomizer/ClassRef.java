@@ -47,7 +47,7 @@ public class ClassRef
 
       dependsOn.add(classNode.superName.replace('/', '.'));
 
-      for (Object itf: classNode.interfaces)
+      for (Object itf : classNode.interfaces)
       {
          dependsOn.add((String) itf);
       }
@@ -58,12 +58,12 @@ public class ClassRef
 
          Type type = Type.getType(methodNode.desc);
          dependsOn.add(type.getReturnType().getClassName());
-         for (Type argType: type.getArgumentTypes())
+         for (Type argType : type.getArgumentTypes())
          {
             dependsOn.add(argType.getClassName());
          }
 
-         for (Object oo: methodNode.exceptions)
+         for (Object oo : methodNode.exceptions)
          {
             String excClass = (String) oo;
             dependsOn.add(excClass.replace('/', '.'));
@@ -131,4 +131,9 @@ public class ClassRef
       return (2 == color);
    }
 
+   @Override
+   public String toString()
+   {
+      return className;
+   }
 }
