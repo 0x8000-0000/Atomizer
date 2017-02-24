@@ -60,19 +60,19 @@ public class Atomizer
       CycleDetector<ClassRef, DefaultEdge> cycleDetector = new CycleDetector<>(classGraph);
       Set<ClassRef> cycles = cycleDetector.findCycles();
 
-      System.out.println("Classed that participate in dependency cycles:");
+      System.out.println("Classes that participate in dependency cycles:");
       for (ClassRef cr: cycles)
       {
          System.out.println("   " + cr);
       }
       System.out.println();
 
-      //displayAllClasses();
-
+      displayAllClasses();
    }
 
    private static void displayAllClasses()
    {
+      System.out.println("All classes:");
       for (ClassRef cr : localClasses.values())
       {
          System.out.println(cr.getClassName());
@@ -80,13 +80,14 @@ public class Atomizer
          {
             if (localClasses.containsKey(name))
             {
-               System.out.println(">  " + name);
+               System.out.println("   . " + name);
             }
             else
             {
-               System.out.println("   " + name);
+               System.out.println("     " + name);
             }
          }
+         System.out.println();
       }
    }
 
