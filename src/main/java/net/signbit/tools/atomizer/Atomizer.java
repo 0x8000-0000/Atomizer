@@ -32,24 +32,37 @@ public class Atomizer
 
       loadClasses(zipFile);
 
+      displayAllClasses();
+
       ArrayList<HashSet<ClassRef>> connectedComponents = findConnectedComponents(localClasses.values());
       System.out.println("Found " + connectedComponents.size() + " connected components");
       for (HashSet<ClassRef> connComp: connectedComponents)
       {
-         System.out.println("   " + connComp.size());
+         if (connComp.size() > 1)
+         {
+            System.out.print("   " + connComp.size() + " : ");
+            for (ClassRef cr: connComp)
+            {
+               System.out.print(cr);
+               System.out.print(' ');
+            }
+            System.out.println();
+         }
       }
       System.out.println();
 
-      //displayAllClasses();
+      /*
       List<ClassRef> buildOrder = computeBuildOrder(localClasses.values());
       for (ClassRef cr: buildOrder)
       {
          System.out.println(cr.getClassName());
       }
+      */
    }
 
    private static void displayAllClasses()
    {
+      System.out.println("Loaded " + localClasses.size() + " classes");
       for (ClassRef cr: localClasses.values())
       {
          System.out.println(cr.getClassName());
@@ -101,19 +114,19 @@ public class Atomizer
       {
          if (cr.isNew())
          {
+            System.out.println("Selected: " + cr);
             cr.markFinal();
-            visitConnectedComponent(cr, currentComponent);
+            visitConnectedComponent(cr, currentComponent, 1);
+
+            connectedComponents.add(currentComponent);
+            currentComponent = new HashSet<ClassRef>();
          }
-
-         connectedComponents.add(currentComponent);
-
-         currentComponent = new HashSet<ClassRef>();
       }
 
       return connectedComponents;
    }
 
-   private static void visitConnectedComponent(ClassRef cr, HashSet<ClassRef> currentComponent)
+   private static void visitConnectedComponent(ClassRef cr, HashSet<ClassRef> currentComponent, int level)
    {
       currentComponent.add(cr);
 
@@ -124,8 +137,13 @@ public class Atomizer
          {
             if (dependentClass.isNew())
             {
-               cr.markFinal();
-               visitConnectedComponent(cr, currentComponent);
+               for (int ii = 0; ii < level; ii ++)
+               {
+                  System.out.print("  ");
+               }
+               System.out.println(dependentClass);
+               dependentClass.markFinal();
+               visitConnectedComponent(dependentClass, currentComponent, level + 1);
             }
          }
       }

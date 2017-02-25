@@ -49,7 +49,7 @@ public class ClassRef
 
       for (Object itf: classNode.interfaces)
       {
-         dependsOn.add((String) itf);
+         dependsOn.add(((String) itf).replace('/', '.'));
       }
 
       for (Object mn : classNode.methods)
@@ -131,4 +131,9 @@ public class ClassRef
       return (2 == color);
    }
 
+   @Override
+   public String toString()
+   {
+      return className;
+   }
 }
