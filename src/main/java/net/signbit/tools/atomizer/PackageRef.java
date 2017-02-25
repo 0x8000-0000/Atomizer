@@ -1,11 +1,10 @@
 package net.signbit.tools.atomizer;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class PackageRef
+public class PackageRef implements Comparable<PackageRef>
 {
    private String name;
 
@@ -86,5 +85,17 @@ public class PackageRef
    public String toString()
    {
       return name;
+   }
+
+   public int compareTo(PackageRef pr)
+   {
+      if (null != pr)
+      {
+         return name.compareTo(pr.name);
+      }
+      else
+      {
+         return 0;
+      }
    }
 }

@@ -1,8 +1,7 @@
 package net.signbit.tools.atomizer;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipFile;
 
@@ -22,10 +21,14 @@ public class Statistician
 
       for (PackageRef pr: PackageRef.getAllPackages().values())
       {
+         Map<PackageRef, AtomicLong> counts = pr.getDependencyCounts();
+         ArrayList<PackageRef> depPkg = new ArrayList<>(counts.keySet());
+         Collections.sort(depPkg);
+
          System.out.println("Dependencies for " + pr.getName());
-         for (Map.Entry<PackageRef, AtomicLong> e: pr.getDependencyCounts().entrySet())
+         for (PackageRef dep: depPkg)
          {
-            System.out.println("   " + e.getKey() + " : " + e.getValue().get());
+            System.out.println("   " + dep + " : " + counts.get(dep).get());
          }
          System.out.println();
       }
