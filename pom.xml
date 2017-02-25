@@ -28,6 +28,18 @@
          <version>5.2</version>
       </dependency>
 
+      <dependency>
+         <groupId>org.jgrapht</groupId>
+         <artifactId>jgrapht-core</artifactId>
+         <version>1.0.1</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jgrapht</groupId>
+         <artifactId>jgrapht-ext</artifactId>
+         <version>1.0.1</version>
+      </dependency>
+
    </dependencies>
 
    <build>
@@ -43,6 +55,24 @@
                   </manifest>
                </archive>
             </configuration>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>3.0.0</version>
+            <executions>
+               <execution>
+                  <id>build-classpath</id>
+                  <phase>generate-sources</phase>
+                  <goals>
+                     <goal>build-classpath</goal>
+                  </goals>
+                  <configuration>
+                     <outputProperty>the.classpath</outputProperty>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
 
          <plugin>
@@ -73,6 +103,13 @@
             </configuration>
          </plugin>
       </plugins>
+
+      <resources>
+         <resource>
+           <directory>src/main/resources</directory>
+           <filtering>true</filtering>
+         </resource>
+      </resources>
    </build>
 
 </project>
