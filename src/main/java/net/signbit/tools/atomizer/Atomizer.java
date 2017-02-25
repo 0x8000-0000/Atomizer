@@ -17,14 +17,12 @@
 package net.signbit.tools.atomizer;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Atomizer
 {
-   private static HashMap<String, ClassRef> localClasses;
+   private static Map<String, ClassRef> localClasses;
 
    public static void main(String[] args) throws IOException
    {
@@ -66,7 +64,7 @@ public class Atomizer
       for (ClassRef cr: localClasses.values())
       {
          System.out.println(cr.getClassName());
-         for (String name : cr.getDependencies())
+         for (String name : cr.getDependenciesClassNames())
          {
             if (localClasses.containsKey(name))
             {
@@ -82,21 +80,9 @@ public class Atomizer
 
    private static void loadClasses(ZipFile zipFile) throws IOException
    {
-      localClasses = new HashMap<String, ClassRef>();
+      localClasses = ClassRef.loadClasses(zipFile);
 
-      Enumeration<? extends ZipEntry> en = zipFile.entries();
-      while (en.hasMoreElements())
-      {
-         ZipEntry e = en.nextElement();
-         String entryName = e.getName();
-         if (entryName.endsWith(".class"))
-         {
-            InputStream stream = zipFile.getInputStream(e);
-            ClassRef cr = new ClassRef(stream);
-
-            localClasses.put(cr.getClassName(), cr);
-         }
-      }
+      ClassRef.resolveDependencies(localClasses);
    }
 
    private static ArrayList<HashSet<ClassRef>> findConnectedComponents(Collection<ClassRef> refs)
@@ -130,7 +116,7 @@ public class Atomizer
    {
       currentComponent.add(cr);
 
-      for (String dependentClassName: cr.getDependencies())
+      for (String dependentClassName: cr.getDependenciesClassNames())
       {
          ClassRef dependentClass = localClasses.get(dependentClassName);
          if (dependentClass != null)
@@ -180,7 +166,7 @@ public class Atomizer
       {
          cr.markTemporary();
 
-         for (String dependentClassName: cr.getDependencies())
+         for (String dependentClassName: cr.getDependenciesClassNames())
          {
             ClassRef dependentClass = localClasses.get(dependentClassName);
             if (dependentClass != null)

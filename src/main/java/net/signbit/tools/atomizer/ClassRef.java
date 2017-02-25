@@ -24,32 +24,50 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class ClassRef
 {
+   private String jarName;
+
+   private String packageName;
+
    private String className;
 
-   private HashSet<String> dependsOn;
+   private HashSet<String> fullDependencySet;
+
+   private HashSet<ClassRef> resolvableDependencies;
 
    private int color;
 
-   public ClassRef(InputStream stream) throws IOException
+   private ClassRef(InputStream stream, String jarName) throws IOException
    {
-      dependsOn = new HashSet<String>();
+      this.jarName = jarName;
+      fullDependencySet = new HashSet<>();
 
       ClassReader reader = new ClassReader(stream);
       ClassNode classNode = new ClassNode();
       reader.accept(classNode, 0);
 
-      className = classNode.name.replace('/', '.');
+      String[] packageElements = classNode.name.split("/");
+      if (packageElements.length > 1)
+      {
+         String[] packageOnly = Arrays.copyOfRange(packageElements, 0, packageElements.length - 1);
+         packageName = String.join(".", packageOnly);
+      }
+      else
+      {
+         packageName = "";
+      }
+      className = packageElements[packageElements.length - 1];
 
-      dependsOn.add(classNode.superName.replace('/', '.'));
+      fullDependencySet.add(classNode.superName.replace('/', '.'));
 
       for (Object itf: classNode.interfaces)
       {
-         dependsOn.add(((String) itf).replace('/', '.'));
+         fullDependencySet.add(((String) itf).replace('/', '.'));
       }
 
       for (Object mn : classNode.methods)
@@ -57,16 +75,16 @@ public class ClassRef
          MethodNode methodNode = (MethodNode) mn;
 
          Type type = Type.getType(methodNode.desc);
-         dependsOn.add(type.getReturnType().getClassName());
+         fullDependencySet.add(type.getReturnType().getClassName());
          for (Type argType: type.getArgumentTypes())
          {
-            dependsOn.add(argType.getClassName());
+            fullDependencySet.add(argType.getClassName());
          }
 
          for (Object oo: methodNode.exceptions)
          {
             String excClass = (String) oo;
-            dependsOn.add(excClass.replace('/', '.'));
+            fullDependencySet.add(excClass.replace('/', '.'));
          }
 
          if (null != methodNode.localVariables)
@@ -74,29 +92,66 @@ public class ClassRef
             for (Object lon : methodNode.localVariables)
             {
                LocalVariableNode localVariableNode = (LocalVariableNode) lon;
-               dependsOn.add(Type.getType(localVariableNode.desc).getClassName());
+               fullDependencySet.add(Type.getType(localVariableNode.desc).getClassName());
             }
          }
       }
 
-      dependsOn.remove("void");
-      dependsOn.remove("long");
-      dependsOn.remove("int");
-      dependsOn.remove("boolean");
+      fullDependencySet.remove("void");
+      fullDependencySet.remove("long");
+      fullDependencySet.remove("int");
+      fullDependencySet.remove("boolean");
 
       // the constructor adds it
-      dependsOn.remove(className);
+      fullDependencySet.remove(packageName + '.' + className);
+   }
+
+   @Override
+   public boolean equals(Object o)
+   {
+      if (null != o)
+      {
+         if (o instanceof ClassRef)
+         {
+            ClassRef cr = (ClassRef) o;
+            if (packageName.equals(cr.packageName) && className.equals(cr.className))
+            {
+               return true;
+            }
+         }
+      }
+
+      return false;
+   }
+
+   @Override
+   public int hashCode()
+   {
+      return packageName.hashCode() ^ className.hashCode();
    }
 
    public String getClassName()
    {
-      return className;
+      return packageName + '.' + className;
    }
 
-   public Set<String> getDependencies()
+   public String getPackageName()
    {
-      return dependsOn;
+      return packageName;
    }
+
+
+   public PackageRef getPackage()
+   {
+      return PackageRef.getPackage(packageName);
+   }
+
+   public Set<String> getDependenciesClassNames()
+   {
+      return fullDependencySet;
+   }
+
+   public Set<ClassRef> getDependencies() { return resolvableDependencies; }
 
    /*
     * Used by the DFS algorithm for topological sort
@@ -134,6 +189,43 @@ public class ClassRef
    @Override
    public String toString()
    {
-      return className;
+      return packageName + '.' + className;
+   }
+
+   public static Map<String, ClassRef> loadClasses(ZipFile zipFile) throws IOException
+   {
+      HashMap<String, ClassRef> allClasses = new HashMap<>();
+
+      Enumeration<? extends ZipEntry> en = zipFile.entries();
+      while (en.hasMoreElements())
+      {
+         ZipEntry e = en.nextElement();
+         String entryName = e.getName();
+         if (entryName.endsWith(".class"))
+         {
+            InputStream stream = zipFile.getInputStream(e);
+            ClassRef cr = new ClassRef(stream, zipFile.getName());
+
+            allClasses.put(cr.getClassName(), cr);
+         }
+      }
+
+      return allClasses;
+   }
+
+   public static void resolveDependencies(Map<String, ClassRef> allClasses)
+   {
+      for (ClassRef cr: allClasses.values())
+      {
+         cr.resolvableDependencies = new HashSet<>();
+         for (String name : cr.getDependenciesClassNames())
+         {
+            ClassRef depClass = allClasses.get(name);
+            if (null != depClass)
+            {
+               cr.resolvableDependencies.add(depClass);
+            }
+         }
+      }
    }
 }
