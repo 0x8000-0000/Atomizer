@@ -17,7 +17,7 @@ public class Statistician
 
       ClassRef.resolveDependencies(allClasses);
 
-      computePackages();
+      PackageRef.computePackageDependencies(allClasses.values());
 
       for (PackageRef pr: PackageRef.getAllPackages().values())
       {
@@ -31,21 +31,6 @@ public class Statistician
             System.out.println("   " + dep + " : " + counts.get(dep).get());
          }
          System.out.println();
-      }
-   }
-
-   private static void computePackages()
-   {
-      HashSet<PackageRef> packages = new HashSet<>();
-
-      for (ClassRef cr: allClasses.values())
-      {
-         PackageRef pr = cr.getPackage();
-
-         for (ClassRef dep: cr.getDependencies())
-         {
-            pr.addDependency(dep.getPackage());
-         }
       }
    }
 }

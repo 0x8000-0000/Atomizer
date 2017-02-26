@@ -1,8 +1,8 @@
 package net.signbit.tools.atomizer;
 
-import org.jgraph.graph.DefaultEdge;
+import org.jgrapht.ext.StringComponentNameProvider;
+import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.DirectedGraph;
-import org.jgrapht.ext.ComponentNameProvider;
 import org.jgrapht.ext.ExportException;
 import org.jgrapht.ext.GraphMLExporter;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -14,16 +14,6 @@ import java.util.zip.ZipFile;
 
 public class VisualizeClasses
 {
-
-   private static class ClassRefName implements ComponentNameProvider<ClassRef>
-   {
-      @Override
-      public String getName(ClassRef classRef)
-      {
-         return classRef.getClassName();
-      }
-   }
-
    private static Map<String, ClassRef> allClasses;
 
    public static void main(String[] args) throws IOException, ExportException
@@ -34,7 +24,7 @@ public class VisualizeClasses
 
       ClassRef.resolveDependencies(allClasses);
 
-      DirectedGraph<ClassRef, DefaultEdge> classGraph = new DefaultDirectedGraph<ClassRef, DefaultEdge>(DefaultEdge.class);
+      DirectedGraph<ClassRef, DefaultEdge> classGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
 
       for (ClassRef cr: allClasses.values())
       {
@@ -49,8 +39,8 @@ public class VisualizeClasses
          }
       }
 
-      GraphMLExporter exporter = new GraphMLExporter();
-      exporter.setVertexLabelProvider(new ClassRefName());
+      GraphMLExporter<ClassRef, DefaultEdge> exporter = new GraphMLExporter<>();
+      exporter.setVertexLabelProvider(new StringComponentNameProvider<>());
       FileWriter writer = new FileWriter(args[1]);
 
       exporter.exportGraph(classGraph, writer);

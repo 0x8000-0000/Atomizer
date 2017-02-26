@@ -1,5 +1,6 @@
 package net.signbit.tools.atomizer;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -96,6 +97,19 @@ public class PackageRef implements Comparable<PackageRef>
       else
       {
          return 0;
+      }
+   }
+
+   public static void computePackageDependencies(Collection<ClassRef> allClasses)
+   {
+      for (ClassRef cr: allClasses)
+      {
+         PackageRef pr = cr.getPackage();
+
+         for (ClassRef dep: cr.getDependencies())
+         {
+            pr.addDependency(dep.getPackage());
+         }
       }
    }
 }
