@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.zip.ZipFile;
 
-public class Analyzer
+public class VisualizeClasses
 {
 
    private static class ClassRefName implements ComponentNameProvider<ClassRef>
