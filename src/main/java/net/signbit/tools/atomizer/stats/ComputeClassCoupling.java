@@ -18,14 +18,34 @@ public class ComputeClassCoupling
 
       ClassRef.resolveDependencies(allClasses);
 
+      System.out.println("Class,\"-> Same\",\"-> Other\",\"Same ->\",\"Other ->\"");
+
       for (ClassRef cr: allClasses.values())
       {
          StringBuilder sb = new StringBuilder();
          sb.append(cr.getClassName());
+         final String thisPackage = cr.getPackageName();
+         int dependsSamePackage = 0;
+         int dependsOtherPackage = 0;
+         for (ClassRef or: cr.getDependencies())
+         {
+            if (thisPackage.equals(or.getPackageName()))
+            {
+               dependsSamePackage ++;
+            }
+            else
+            {
+               dependsOtherPackage ++;
+            }
+         }
          sb.append(',');
-         sb.append(cr.getDependencies().size());
+         sb.append(dependsSamePackage);
          sb.append(',');
-         sb.append(cr.getDependedOnByCount());
+         sb.append(dependsOtherPackage);
+         sb.append(',');
+         sb.append(cr.getDependedOnBySamePackageCount());
+         sb.append(',');
+         sb.append(cr.getDependedOnByOutsidePackageCount());
          System.out.println(sb.toString());
       }
    }

@@ -40,7 +40,9 @@ public class ClassRef
 
    private HashSet<ClassRef> resolvableDependencies;
 
-   private int dependedOnByCount = 0;
+   private int dependedOnByOutsidePackageCount = 0;
+
+   private int dependedOnBySamePackageCount = 0;
 
    private int color;
 
@@ -226,19 +228,31 @@ public class ClassRef
             if (null != depClass)
             {
                cr.resolvableDependencies.add(depClass);
-               depClass.markDependedOn();
+               depClass.markDependedOn(cr);
             }
          }
       }
    }
 
-   public void markDependedOn()
+   public void markDependedOn(ClassRef other)
    {
-      dependedOnByCount++;
+      if (other.getPackage().equals(getPackage()))
+      {
+         dependedOnBySamePackageCount ++;
+      }
+      else
+      {
+         dependedOnByOutsidePackageCount++;
+      }
    }
 
-   public int getDependedOnByCount()
+   public int getDependedOnByOutsidePackageCount()
    {
-      return dependedOnByCount;
+      return dependedOnByOutsidePackageCount;
+   }
+
+   public int getDependedOnBySamePackageCount()
+   {
+      return dependedOnBySamePackageCount;
    }
 }
