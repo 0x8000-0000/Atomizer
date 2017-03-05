@@ -40,6 +40,8 @@ public class ClassRef
 
    private HashSet<ClassRef> resolvableDependencies;
 
+   private int dependedOnByCount = 0;
+
    private int color;
 
    private ClassRef(InputStream stream, String jarName) throws IOException
@@ -224,8 +226,19 @@ public class ClassRef
             if (null != depClass)
             {
                cr.resolvableDependencies.add(depClass);
+               depClass.markDependedOn();
             }
          }
       }
+   }
+
+   public void markDependedOn()
+   {
+      dependedOnByCount++;
+   }
+
+   public int getDependedOnByCount()
+   {
+      return dependedOnByCount;
    }
 }
