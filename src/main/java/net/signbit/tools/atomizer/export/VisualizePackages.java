@@ -1,5 +1,7 @@
-package net.signbit.tools.atomizer;
+package net.signbit.tools.atomizer.export;
 
+import net.signbit.tools.atomizer.ClassRef;
+import net.signbit.tools.atomizer.PackageRef;
 import org.jgrapht.ext.GraphMLExporter;
 import org.jgrapht.ext.StringComponentNameProvider;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
