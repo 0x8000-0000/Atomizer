@@ -30,6 +30,8 @@ import java.util.zip.ZipFile;
 
 public class ClassRef
 {
+   private int vertexId;
+
    private String jarName;
 
    private String packageName;
@@ -255,4 +257,15 @@ public class ClassRef
    {
       return dependedOnBySamePackageCount;
    }
+
+   public int getVertexId()
+   {
+      return vertexId;
+   }
+
+   public void setVertexId(int vertexId)
+   {
+      this.vertexId = vertexId;
+   }
+
 }
