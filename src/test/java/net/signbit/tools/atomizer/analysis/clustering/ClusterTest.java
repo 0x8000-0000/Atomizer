@@ -41,7 +41,7 @@ public class ClusterTest
    public void computeCoupling()
    {
       double coupling = cluster.computeCoupling();
-      assertEquals(0.5, coupling, 0.00001);
+      assertEquals(1.0, coupling, 0.00001);
    }
 
 }

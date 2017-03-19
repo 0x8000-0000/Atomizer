@@ -52,7 +52,7 @@ public class Cluster<V, E>
    public double computeCoupling()
    {
       updateCohesionCoupling();
-      return cohesion;
+      return coupling;
    }
 
    private void updateCohesionCoupling()
