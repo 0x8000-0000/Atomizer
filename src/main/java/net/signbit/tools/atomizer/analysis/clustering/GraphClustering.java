@@ -22,13 +22,7 @@ public class GraphClustering<V, E>
       clusters = new ArrayList<>();
       includedIn = new HashMap<>();
 
-      for (V vv: support.vertexSet())
-      {
-         Cluster cc = new Cluster(support);
-         cc.addMember(vv);
-         clusters.add(cc);
-         includedIn.put(vv, cc);
-      }
+      generateInitialClustering();
    }
 
    public GraphClustering(GraphClustering<V, E> other)
@@ -79,11 +73,29 @@ public class GraphClustering<V, E>
       return map.ceilingEntry(value).getValue();
    }
 
+   public void generateInitialClustering()
+   {
+      // shuffle vertices
+
+      // select N randomly between 1 and number of vertices / 4
+
+      // for the first N vertices
+      //    if vertex is not assigned to cluster
+      //       create new cluster and assign vertex to it
+
+      // for the rest of vertices
+      //    assign vertex to the largest adjacent cluster
+   }
+
    public void mutate()
    {
       // select two adjacent clusters with high attraction and join them
 
       // select one cluster with low cohesion and break it in two
+
+      // take P clusters with lowest cohesion and disband them
+
+      // take Q clusters that have high coupling with other clusters and disband them
    }
 
 }
