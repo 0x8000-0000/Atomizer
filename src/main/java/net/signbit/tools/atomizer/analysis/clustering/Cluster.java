@@ -14,6 +14,7 @@ public class Cluster<V, E>
    private HashSet<V> members;
 
    private double cohesion;
+   private double coupling;
    private boolean cohesionIsValid = false;
 
    public Cluster(DirectedGraph<V, E> support)
@@ -36,7 +37,25 @@ public class Cluster<V, E>
       members.add(vv);
    }
 
+   public void removeMember(V vv)
+   {
+      cohesionIsValid = false;
+      members.remove(vv);
+   }
+
    public double computeCohesion()
+   {
+      updateCohesionCoupling();
+      return cohesion;
+   }
+
+   public double computeCoupling()
+   {
+      updateCohesionCoupling();
+      return cohesion;
+   }
+
+   private void updateCohesionCoupling()
    {
       if (! cohesionIsValid)
       {
@@ -76,26 +95,20 @@ public class Cluster<V, E>
                   outgoingOut++;
                }
             }
-
-            assert outgoingIn == incomingIn;
          }
 
-         if ((0 == incomingOut) && (0 == outgoingOut))
-         {
-            cohesion = ISOLATED_CLUSTER;
-         }
-         else
-         {
-            cohesion = (outgoingIn / ((double) (incomingOut + outgoingOut)));
-         }
+         assert (outgoingIn == incomingIn);
+
+         final double size = members.size();
+         cohesion = (outgoingIn + incomingIn) / (size * size);
+
+         coupling = (incomingOut + outgoingOut) / size;
       }
-
-      return cohesion;
    }
 
    public int getSize() { return members.size(); }
 
-   private int countEdgesFrom(Cluster other)
+   private int countEdgesFrom(Cluster<V, E> other)
    {
       int edgeCount = 0;
 
@@ -114,7 +127,7 @@ public class Cluster<V, E>
       return edgeCount;
    }
 
-   private int countEdgesTo(Cluster other)
+   private int countEdgesTo(Cluster<V, E> other)
    {
       int edgeCount = 0;
 
@@ -133,7 +146,7 @@ public class Cluster<V, E>
       return edgeCount;
    }
 
-   public boolean isAdjacent(Cluster other)
+   public boolean isAdjacent(Cluster<V, E> other)
    {
       int thisToOther = countEdgesTo(other);
       if (0 != thisToOther)
@@ -150,7 +163,7 @@ public class Cluster<V, E>
       return false;
    }
 
-   public double computeAttraction(Cluster other)
+   public double computeAttraction(Cluster<V, E> other)
    {
       int thisToOther = countEdgesTo(other);
       int otherToThis = countEdgesFrom(other);
@@ -161,5 +174,14 @@ public class Cluster<V, E>
    public Set<V> getMembers()
    {
       return members;
+   }
+
+   /**
+    *
+    * @return the vertex V such as V has more adjacent vertices outside cluster
+    */
+   V findLeastAttachedNode()
+   {
+      return null;
    }
 }

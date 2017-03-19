@@ -11,9 +11,9 @@ public class GraphClustering<V, E>
 {
    private final DirectedGraph<V, E> support;
 
-   private ArrayList<Cluster> clusters;
+   private ArrayList<Cluster<V, E>> clusters;
 
-   private HashMap<V, Cluster> includedIn;
+   private HashMap<V, Cluster<V, E>> includedIn;
 
    public GraphClustering(DirectedGraph<V, E> support)
    {
@@ -32,9 +32,9 @@ public class GraphClustering<V, E>
       clusters = new ArrayList<>();
       includedIn = new HashMap<>();
 
-      for (Cluster cc: other.clusters)
+      for (Cluster<V, E> cc: other.clusters)
       {
-         Cluster<V, E> clusterClone = new Cluster(cc);
+         Cluster<V, E> clusterClone = new Cluster<>(cc);
          clusters.add(clusterClone);
 
          for (V vv: clusterClone.getMembers())
@@ -48,7 +48,7 @@ public class GraphClustering<V, E>
    {
       double score = 0;
 
-      for (Cluster cc: clusters)
+      for (Cluster<V, E> cc: clusters)
       {
          score += cc.getSize() * cc.computeCohesion();
       }
@@ -96,6 +96,16 @@ public class GraphClustering<V, E>
       // take P clusters with lowest cohesion and disband them
 
       // take Q clusters that have high coupling with other clusters and disband them
+
+      // select R clusters and kick out the least attached member
+   }
+
+   public GraphClustering<V, E> combine(GraphClustering<V, E> left, GraphClustering<V, E> right)
+   {
+      // select top non-overlapping clusters by cohesion or coupling from left and right
+
+      // attach all other vertices to the nearest cluster
+      return null;
    }
 
 }
