@@ -2,39 +2,39 @@ package net.signbit.tools.atomizer.analysis.clustering;
 
 import org.jgrapht.DirectedGraph;
 
-import java.util.HashSet;
-import java.util.Set;
+import static java.util.Comparator.comparingInt;
+
+import java.util.*;
 
 public class Cluster<V, E>
 {
-   public static final double ISOLATED_CLUSTER = 2.0;
 
    private DirectedGraph<V, E> support;
 
-   private HashSet<V> members;
+   private HashMap<V, Integer> members;
 
    private double cohesion;
    private double coupling;
    private boolean cohesionIsValid = false;
 
-   public Cluster(DirectedGraph<V, E> support)
+   Cluster(DirectedGraph<V, E> support)
    {
       this.support = support;
 
-      members = new HashSet<>();
+      members = new HashMap<>();
    }
 
-   public Cluster(Cluster<V, E> other)
+   Cluster(Cluster<V, E> other)
    {
       this.support = other.support;
 
-      members = new HashSet<>(other.members);
+      members = new HashMap<>(other.members);
    }
 
-   public void addMember(V vv)
+   void addMember(V vv)
    {
       cohesionIsValid = false;
-      members.add(vv);
+      members.put(vv, null);
    }
 
    public void removeMember(V vv)
@@ -43,13 +43,13 @@ public class Cluster<V, E>
       members.remove(vv);
    }
 
-   public double computeCohesion()
+   double computeCohesion()
    {
       updateCohesionCoupling();
       return cohesion;
    }
 
-   public double computeCoupling()
+   double computeCoupling()
    {
       updateCohesionCoupling();
       return coupling;
@@ -68,33 +68,42 @@ public class Cluster<V, E>
          // edge originating outside this cluster and terminating inside
          int incomingOut = 0;
 
-         for (V vv : members)
+         for (Map.Entry<V, Integer> vv : members.entrySet())
          {
-            for (E ee : support.incomingEdgesOf(vv))
+            int attachmentIn = 0;
+            int attachmentOut = 0;
+
+            for (E ee : support.incomingEdgesOf(vv.getKey()))
             {
                V other = support.getEdgeSource(ee);
-               if (members.contains(other))
+               if (members.containsKey(other))
                {
                   incomingIn++;
+                  attachmentIn++;
                }
                else
                {
                   incomingOut++;
+                  attachmentOut++;
                }
             }
 
-            for (E ee : support.outgoingEdgesOf(vv))
+            for (E ee : support.outgoingEdgesOf(vv.getKey()))
             {
                V other = support.getEdgeTarget(ee);
-               if (members.contains(other))
+               if (members.containsKey(other))
                {
                   outgoingIn++;
+                  attachmentIn++;
                }
                else
                {
                   outgoingOut++;
+                  attachmentOut++;
                }
             }
+
+            vv.setValue(attachmentIn - attachmentOut);
          }
 
          assert (outgoingIn == incomingIn);
@@ -106,18 +115,18 @@ public class Cluster<V, E>
       }
    }
 
-   public int getSize() { return members.size(); }
+   int getSize() { return members.size(); }
 
    private int countEdgesFrom(Cluster<V, E> other)
    {
       int edgeCount = 0;
 
-      for (V vv: members)
+      for (V vv: members.keySet())
       {
          for (E ee : support.incomingEdgesOf(vv))
          {
             V uu = support.getEdgeSource(ee);
-            if (other.members.contains(uu))
+            if (other.members.containsKey(uu))
             {
                edgeCount++;
             }
@@ -131,12 +140,12 @@ public class Cluster<V, E>
    {
       int edgeCount = 0;
 
-      for (V vv: members)
+      for (V vv: members.keySet())
       {
          for (E ee : support.outgoingEdgesOf(vv))
          {
             V uu = support.getEdgeTarget(ee);
-            if (other.members.contains(uu))
+            if (other.members.containsKey(uu))
             {
                edgeCount++;
             }
@@ -155,12 +164,7 @@ public class Cluster<V, E>
       }
 
       int otherToThis = countEdgesFrom(other);
-      if (0 != otherToThis)
-      {
-         return true;
-      }
-
-      return false;
+      return 0 != otherToThis;
    }
 
    public double computeAttraction(Cluster<V, E> other)
@@ -171,9 +175,9 @@ public class Cluster<V, E>
       return (thisToOther + otherToThis) / ((double) (members.size() + other.members.size()));
    }
 
-   public Set<V> getMembers()
+   Set<V> getMembers()
    {
-      return members;
+      return members.keySet();
    }
 
    /**
@@ -182,6 +186,7 @@ public class Cluster<V, E>
     */
    V findLeastAttachedNode()
    {
-      return null;
+      Comparator<Map.Entry<V, Integer>> comparator = comparingInt(Map.Entry::getValue);
+      return Collections.min(members.entrySet(), comparator).getKey();
    }
 }
