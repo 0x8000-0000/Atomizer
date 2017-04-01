@@ -215,4 +215,11 @@
         </module>
         <module name="CommentsIndentation"/>
     </module>
+
+    <!-- Headers -->
+    <module name="Header">
+        <property name="headerFile" value="${checkstyle.header.file}"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="id" value="header"/>
+    </module>
 </module>
