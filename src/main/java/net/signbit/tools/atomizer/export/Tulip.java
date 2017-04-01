@@ -16,11 +16,11 @@
 
 package net.signbit.tools.atomizer.export;
 
-import net.signbit.tools.atomizer.ClassRef;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.zip.ZipFile;
+
+import net.signbit.tools.atomizer.ClassRef;
 
 /** Export in Tulip format
  *

@@ -16,12 +16,11 @@
 
 package net.signbit.tools.atomizer.analysis.clustering;
 
-import org.jgrapht.DirectedGraph;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.TreeMap;
+
+import org.jgrapht.DirectedGraph;
 
 public class GraphClustering<V, E>
 {
@@ -48,12 +47,12 @@ public class GraphClustering<V, E>
       clusters = new ArrayList<>();
       includedIn = new HashMap<>();
 
-      for (Cluster<V, E> cc: other.clusters)
+      for (Cluster<V, E> cc : other.clusters)
       {
          Cluster<V, E> clusterClone = new Cluster<>(cc);
          clusters.add(clusterClone);
 
-         for (V vv: clusterClone.getMembers())
+         for (V vv : clusterClone.getMembers())
          {
             includedIn.put(vv, clusterClone);
          }
@@ -64,7 +63,7 @@ public class GraphClustering<V, E>
    {
       double score = 0;
 
-      for (Cluster<V, E> cc: clusters)
+      for (Cluster<V, E> cc : clusters)
       {
          score += cc.getSize() * cc.computeCohesion();
       }
@@ -79,7 +78,7 @@ public class GraphClustering<V, E>
 
       double totalWeight = 0;
 
-      for (int ii = 0; ii < element.length; ii ++)
+      for (int ii = 0; ii < element.length; ii++)
       {
          totalWeight += weight[ii];
          map.put(totalWeight, element[ii]);

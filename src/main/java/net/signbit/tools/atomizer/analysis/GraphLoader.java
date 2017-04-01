@@ -16,16 +16,17 @@
 
 package net.signbit.tools.atomizer.analysis;
 
-import net.signbit.tools.atomizer.ClassRef;
+import java.io.IOException;
+import java.util.Map;
+import java.util.zip.ZipFile;
+
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.zip.ZipFile;
+import net.signbit.tools.atomizer.ClassRef;
 
 public class GraphLoader
 {
@@ -43,14 +44,14 @@ public class GraphLoader
 
       DirectedGraph<ClassRef, DefaultEdge> classGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
 
-      for (ClassRef cr: allClasses.values())
+      for (ClassRef cr : allClasses.values())
       {
          classGraph.addVertex(cr);
       }
 
-      for (ClassRef cr: allClasses.values())
+      for (ClassRef cr : allClasses.values())
       {
-         for (ClassRef dep: cr.getDependencies())
+         for (ClassRef dep : cr.getDependencies())
          {
             classGraph.addEdge(cr, dep);
          }

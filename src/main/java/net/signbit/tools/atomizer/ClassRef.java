@@ -16,17 +16,17 @@
 
 package net.signbit.tools.atomizer;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.LocalVariableNode;
-import org.objectweb.asm.tree.MethodNode;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.LocalVariableNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public class ClassRef
 {
@@ -71,7 +71,7 @@ public class ClassRef
 
       fullDependencySet.add(classNode.superName.replace('/', '.'));
 
-      for (Object itf: classNode.interfaces)
+      for (Object itf : classNode.interfaces)
       {
          fullDependencySet.add(((String) itf).replace('/', '.'));
       }
@@ -82,12 +82,12 @@ public class ClassRef
 
          Type type = Type.getType(methodNode.desc);
          fullDependencySet.add(type.getReturnType().getClassName());
-         for (Type argType: type.getArgumentTypes())
+         for (Type argType : type.getArgumentTypes())
          {
             fullDependencySet.add(argType.getClassName());
          }
 
-         for (Object oo: methodNode.exceptions)
+         for (Object oo : methodNode.exceptions)
          {
             String excClass = (String) oo;
             fullDependencySet.add(excClass.replace('/', '.'));
@@ -157,7 +157,10 @@ public class ClassRef
       return fullDependencySet;
    }
 
-   public Set<ClassRef> getDependencies() { return resolvableDependencies; }
+   public Set<ClassRef> getDependencies()
+   {
+      return resolvableDependencies;
+   }
 
    /*
     * Used by the DFS algorithm for topological sort
@@ -221,7 +224,7 @@ public class ClassRef
 
    public static void resolveDependencies(Map<String, ClassRef> allClasses)
    {
-      for (ClassRef cr: allClasses.values())
+      for (ClassRef cr : allClasses.values())
       {
          cr.resolvableDependencies = new HashSet<>();
          for (String name : cr.getDependenciesClassNames())
@@ -240,7 +243,7 @@ public class ClassRef
    {
       if (other.getPackage().equals(getPackage()))
       {
-         dependedOnBySamePackageCount ++;
+         dependedOnBySamePackageCount++;
       }
       else
       {

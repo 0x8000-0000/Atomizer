@@ -16,18 +16,18 @@
 
 package net.signbit.tools.atomizer;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
 import org.objectweb.asm.ClassReader;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class DumpClassReferences
 {
@@ -60,7 +60,7 @@ public class DumpClassReferences
       System.out.println("Class: " + classNode.name);
       System.out.println("   Extends: " + classNode.superName);
 
-      for (Object itf: classNode.interfaces)
+      for (Object itf : classNode.interfaces)
       {
          System.out.println("   Implements: " + itf);
       }
@@ -72,17 +72,17 @@ public class DumpClassReferences
 
          Type type = Type.getType(methodNode.desc);
          System.out.println("      Return: " + type.getReturnType().getClassName());
-         for (Type argType: type.getArgumentTypes())
+         for (Type argType : type.getArgumentTypes())
          {
             System.out.println("      Param: " + argType.getClassName());
          }
 
-         for (Object oo: methodNode.exceptions)
+         for (Object oo : methodNode.exceptions)
          {
             System.out.println("      Throws: " + oo);
          }
 
-         for (Object lon: methodNode.localVariables)
+         for (Object lon : methodNode.localVariables)
          {
             LocalVariableNode localVariableNode = (LocalVariableNode) lon;
             System.out.println("      Var: " + Type.getType(localVariableNode.desc).getClassName());

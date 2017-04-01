@@ -16,11 +16,11 @@
 
 package net.signbit.tools.atomizer.analysis.clustering;
 
+import java.util.*;
+
 import org.jgrapht.DirectedGraph;
 
 import static java.util.Comparator.comparingInt;
-
-import java.util.*;
 
 public class Cluster<V, E>
 {
@@ -73,7 +73,7 @@ public class Cluster<V, E>
 
    private void updateCohesionCoupling()
    {
-      if (! cohesionIsValid)
+      if (!cohesionIsValid)
       {
          // edge contained in cluster
          int outgoingIn = 0;
@@ -131,13 +131,16 @@ public class Cluster<V, E>
       }
    }
 
-   int getSize() { return members.size(); }
+   int getSize()
+   {
+      return members.size();
+   }
 
    private int countEdgesFrom(Cluster<V, E> other)
    {
       int edgeCount = 0;
 
-      for (V vv: members.keySet())
+      for (V vv : members.keySet())
       {
          for (E ee : support.incomingEdgesOf(vv))
          {
@@ -156,7 +159,7 @@ public class Cluster<V, E>
    {
       int edgeCount = 0;
 
-      for (V vv: members.keySet())
+      for (V vv : members.keySet())
       {
          for (E ee : support.outgoingEdgesOf(vv))
          {
@@ -197,7 +200,6 @@ public class Cluster<V, E>
    }
 
    /**
-    *
     * @return the vertex V such as V has more adjacent vertices outside cluster
     */
    V findLeastAttachedNode()

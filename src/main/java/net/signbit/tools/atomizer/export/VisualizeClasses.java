@@ -16,16 +16,17 @@
 
 package net.signbit.tools.atomizer.export;
 
-import net.signbit.tools.atomizer.ClassRef;
-import net.signbit.tools.atomizer.analysis.GraphLoader;
-import org.jgrapht.ext.StringComponentNameProvider;
-import org.jgrapht.graph.DefaultEdge;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.ext.ExportException;
 import org.jgrapht.ext.GraphMLExporter;
+import org.jgrapht.ext.StringComponentNameProvider;
+import org.jgrapht.graph.DefaultEdge;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import net.signbit.tools.atomizer.ClassRef;
+import net.signbit.tools.atomizer.analysis.GraphLoader;
 
 public class VisualizeClasses
 {

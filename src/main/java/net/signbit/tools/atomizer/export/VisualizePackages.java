@@ -16,19 +16,20 @@
 
 package net.signbit.tools.atomizer.export;
 
-import net.signbit.tools.atomizer.ClassRef;
-import net.signbit.tools.atomizer.PackageRef;
-import org.jgrapht.ext.GraphMLExporter;
-import org.jgrapht.ext.StringComponentNameProvider;
-import org.jgrapht.graph.DefaultDirectedWeightedGraph;
-import org.jgrapht.ext.ExportException;
-import org.jgrapht.graph.DefaultWeightedEdge;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipFile;
+
+import org.jgrapht.ext.ExportException;
+import org.jgrapht.ext.GraphMLExporter;
+import org.jgrapht.ext.StringComponentNameProvider;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.graph.DefaultWeightedEdge;
+
+import net.signbit.tools.atomizer.ClassRef;
+import net.signbit.tools.atomizer.PackageRef;
 
 public class VisualizePackages
 {

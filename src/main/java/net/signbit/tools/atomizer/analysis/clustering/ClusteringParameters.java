@@ -16,12 +16,12 @@
 
 package net.signbit.tools.atomizer.analysis.clustering;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClusteringParameters
 {
@@ -41,7 +41,7 @@ public class ClusteringParameters
       }
       catch (IOException ioe)
       {
-
+         logger.error("Failed to read parameters", ioe);
       }
    }
 
