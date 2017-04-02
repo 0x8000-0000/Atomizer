@@ -287,4 +287,84 @@ public class ClassRef
       this.vertexId = vertexId;
    }
 
+   public static Map<String, ClassRef> filterInnerClasses(Map<String, ClassRef> allClasses)
+   {
+      HashMap<String, ClassRef> filteredSet = new HashMap<>(allClasses.size());
+
+      for (Map.Entry<String, ClassRef> entry: allClasses.entrySet())
+      {
+         int dollarPosition = entry.getKey().indexOf('$');
+         if (-1 == dollarPosition)
+         {
+            filteredSet.put(entry.getKey(), entry.getValue());
+         }
+         else
+         {
+            // this is an inner class; transfer all its dependencies to parent
+            String enclosingClassName = entry.getKey().substring(0, dollarPosition);
+            ClassRef enclosingClass = allClasses.get(enclosingClassName);
+
+            for (ClassRef dep: entry.getValue().getDependencies())
+            {
+               enclosingClass.dependsOn.add(dep);
+            }
+         }
+      }
+
+      for (Map.Entry<String, ClassRef> entry: filteredSet.entrySet())
+      {
+         /*
+          * filter classes on which this class depends
+          */
+         ClassRef cr = entry.getValue();
+         HashSet<ClassRef> filteredDependencies = new HashSet<>(cr.getDependencies().size());
+         for (ClassRef dep: cr.getDependencies())
+         {
+            int dollarPosition = dep.getClassName().indexOf('$');
+            if (-1 == dollarPosition)
+            {
+               if (! dep.getClassName().equals(entry.getKey()))
+               {
+                  filteredDependencies.add(dep);
+               }
+            }
+            else
+            {
+               String enclosingClassName = dep.getClassName().substring(0, dollarPosition);
+               if (! enclosingClassName.equals(entry.getKey()))
+               {
+                  filteredDependencies.add(allClasses.get(enclosingClassName));
+               }
+            }
+         }
+         cr.dependsOn = filteredDependencies;
+
+         /*
+          * filter classes which depend on this class
+          */
+         HashSet<ClassRef> filteredReverseDependencies = new HashSet<>(cr.getReverseDependencies().size());
+         for (ClassRef dep: cr.getReverseDependencies())
+         {
+            int dollarPosition = dep.getClassName().indexOf('$');
+            if (-1 == dollarPosition)
+            {
+               if (! dep.getClassName().equals(entry.getKey()))
+               {
+                  filteredReverseDependencies.add(dep);
+               }
+            }
+            else
+            {
+               String enclosingClassName = dep.getClassName().substring(0, dollarPosition);
+               if (! enclosingClassName.equals(entry.getKey()))
+               {
+                  filteredReverseDependencies.add(dep);
+               }
+            }
+         }
+         cr.isDependentOnBy = filteredReverseDependencies;
+      }
+
+      return filteredSet;
+   }
 }

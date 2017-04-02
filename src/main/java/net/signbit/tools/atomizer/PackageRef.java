@@ -139,4 +139,24 @@ public class PackageRef implements Comparable<PackageRef>
    {
       return classes;
    }
+
+   public static void filterInnerClasses()
+   {
+      for (Map.Entry<String, PackageRef> entry: allPackages.entrySet())
+      {
+         HashSet<ClassRef> filteredClases = new HashSet<>(entry.getValue().classes.size());
+
+         for (ClassRef cr: entry.getValue().classes)
+         {
+            String className = cr.getClassName();
+            int dollarPosition = className.indexOf('$');
+            if (-1 == dollarPosition)
+            {
+               filteredClases.add(cr);
+            }
+         }
+
+         entry.getValue().classes = filteredClases;
+      }
+   }
 }
