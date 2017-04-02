@@ -249,7 +249,10 @@ public class ClassRef
                depClass.markDependedOn(cr);
             }
          }
+
+         cr.getPackage().addClassRef(cr);
       }
+
    }
 
    public void markDependedOn(ClassRef other)

@@ -41,9 +41,8 @@ public class ABC
 
    private static int POPULATION_SIZE = 1024;
    private static int RUN_CYCLE_COUNT = 256;
-   private static double BIAS = 0.33;
 
-   public ABC(final Collection<ClassRef> classSet, double bias, int popSize)
+   public ABC(final Collection<ClassRef> classSet, int popSize)
    {
       rdg = new RandomDataGenerator();
 
@@ -68,7 +67,8 @@ public class ABC
       clusters = new ABCluster[populationSize * 2];
       for (int ii = 0; ii < populationSize; ii ++)
       {
-         // TODO: use a normally distributed bias
+         // TODO: consider use a normally distributed bias
+         double bias = rdg.nextUniform(0, 1);
          clusters[ii] = new ABCluster(classRefs, rdg, bias);
       }
       for (int ii = 0; ii < populationSize; ii ++)
@@ -80,24 +80,46 @@ public class ABC
       Arrays.parallelSort(clusters);
    }
 
-   public void step()
+   public void performBigStep()
+   {
+      /*
+       * generate new population
+       */
+      for (int ii = 0; ii < populationSize; ii++)
+      {
+         int selector = rdg.nextInt(0, populationSize - 1);
+         clusters[populationSize + ii] = clusters[ii].mutateByPackage(classRefs.get(selector));
+      }
+
+      selectBestClusters();
+   }
+
+   public void performStep()
    {
       // TODO: use more CPUs
 
       /*
        * generate new population
        */
-      for (int ii = 0; ii < populationSize; ii ++)
+      for (int ii = 0; ii < populationSize; ii++)
       {
          int selector = rdg.nextInt(0, populationSize - 1);
          clusters[populationSize + ii] = clusters[ii].mutate(classRefs.get(selector));
       }
 
+      selectBestClusters();
+   }
+
+   private void selectBestClusters()
+   {
       /*
        * sort the candidates; so the best ones are at the beginning of the pool
        */
       Arrays.parallelSort(clusters);
 
+      /*
+       * eliminate duplicates
+       */
       int ii = 0;
       while (ii < populationSize)
       {
@@ -135,13 +157,25 @@ public class ABC
       for (int ii = 0; ii < RUN_CYCLE_COUNT; ii ++)
       {
          final long stepStartTime = System.nanoTime();
-         abc.step();
+         abc.performBigStep();
          final long stepEndTime = System.nanoTime();
 
          int bestScore = abc.clusters[0].getScore();
          int worstScore = abc.clusters[abc.populationSize - 1].getScore();
 
-         logger.info("Step {} completed in {}ms; best score {}, worst score {}", ii, (stepEndTime - stepStartTime) / 1000000, bestScore, worstScore);
+         logger.info("Package step {} completed in {}ms; best score {}, worst score {}", ii, (stepEndTime - stepStartTime) / 1000000, bestScore, worstScore);
+      }
+
+      for (int ii = 0; ii < RUN_CYCLE_COUNT; ii ++)
+      {
+         final long stepStartTime = System.nanoTime();
+         abc.performStep();
+         final long stepEndTime = System.nanoTime();
+
+         int bestScore = abc.clusters[0].getScore();
+         int worstScore = abc.clusters[abc.populationSize - 1].getScore();
+
+         logger.info("Class step {} completed in {}ms; best score {}, worst score {}", ii, (stepEndTime - stepStartTime) / 1000000, bestScore, worstScore);
       }
 
       FileWriter writer = new FileWriter(args[3]);

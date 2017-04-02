@@ -25,6 +25,7 @@ import java.util.HashSet;
 import org.apache.commons.math3.random.RandomDataGenerator;
 
 import net.signbit.tools.atomizer.ClassRef;
+import net.signbit.tools.atomizer.PackageRef;
 
 // TODO: Convert to template form
 public class ABCluster implements Comparable<ABCluster>
@@ -129,14 +130,14 @@ public class ABCluster implements Comparable<ABCluster>
       return newCluster;
    }
 
-   private void mutateInPlace(ClassRef randomElement)
+   private void mutateInPlace(ClassRef selectedElement)
    {
-      if (A.contains(randomElement))
+      if (A.contains(selectedElement))
       {
          /*
           * moving element from A to B
           */
-         for (ClassRef dep: randomElement.getDependencies())
+         for (ClassRef dep: selectedElement.getDependencies())
          {
             if (B.contains(dep))
             {
@@ -152,7 +153,7 @@ public class ABCluster implements Comparable<ABCluster>
             }
          }
 
-         for (ClassRef dep: randomElement.getReverseDependencies())
+         for (ClassRef dep: selectedElement.getReverseDependencies())
          {
             if (B.contains(dep))
             {
@@ -168,15 +169,15 @@ public class ABCluster implements Comparable<ABCluster>
             }
          }
 
-         A.remove(randomElement);
-         B.add(randomElement);
+         A.remove(selectedElement);
+         B.add(selectedElement);
       }
       else
       {
          /*
           * moving element from B to A
           */
-         for (ClassRef dep: randomElement.getDependencies())
+         for (ClassRef dep: selectedElement.getDependencies())
          {
             if (B.contains(dep))
             {
@@ -192,7 +193,7 @@ public class ABCluster implements Comparable<ABCluster>
             }
          }
 
-         for (ClassRef dep: randomElement.getReverseDependencies())
+         for (ClassRef dep: selectedElement.getReverseDependencies())
          {
             if (B.contains(dep))
             {
@@ -208,8 +209,8 @@ public class ABCluster implements Comparable<ABCluster>
             }
          }
 
-         B.remove(randomElement);
-         A.add(randomElement);
+         B.remove(selectedElement);
+         A.add(selectedElement);
       }
 
       /*
@@ -223,6 +224,53 @@ public class ABCluster implements Comparable<ABCluster>
       assert fast_A_to_B == A_to_B;
       assert fast_B_to_A == B_to_A;
       */
+   }
+
+   public ABCluster mutateByPackage(ClassRef classRef)
+   {
+      ABCluster newCluster = new ABCluster(this);
+
+      PackageRef pr = classRef.getPackage();
+
+      int mostlyInA = 0;
+      int mostlyInB = 0;
+
+      for (ClassRef cr: pr.getClasses())
+      {
+         if (A.contains(cr))
+         {
+            mostlyInA ++;
+         }
+         else
+         {
+            mostlyInB ++;
+         }
+      }
+
+      if (mostlyInA > mostlyInB)
+      {
+         // move all elements from A to B
+         for (ClassRef cr: pr.getClasses())
+         {
+            if (A.contains(cr))
+            {
+               newCluster.mutateInPlace(cr);
+            }
+         }
+      }
+      else
+      {
+         // move all elements from B to A
+         for (ClassRef cr: pr.getClasses())
+         {
+            if (B.contains(cr))
+            {
+               newCluster.mutateInPlace(cr);
+            }
+         }
+      }
+
+      return newCluster;
    }
 
    @Override
@@ -282,4 +330,5 @@ public class ABCluster implements Comparable<ABCluster>
          writer.append('\n');
       }
    }
+
 }
