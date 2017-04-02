@@ -31,12 +31,16 @@ public class ABC
 {
    private static final Logger logger = LoggerFactory.getLogger(ABC.class);
 
-   final private ArrayList<ClassRef> classRefs;
+   private final ArrayList<ClassRef> classRefs;
 
    private ABCluster[] clusterCandidates;
    private int populationSize;
 
    private RandomDataGenerator rdg;
+
+   private static int POPULATION_SIZE = 1024;
+   private static int RUN_CYCLE_COUNT = 256;
+   private static double BIAS = 0.33;
 
    public ABC(final Collection<ClassRef> classSet, double bias, int popSize)
    {
@@ -71,6 +75,7 @@ public class ABC
          int selector = rdg.nextInt(0, populationSize - 1);
          clusterCandidates[populationSize + ii] = clusterCandidates[ii].mutate(classRefs.get(selector));
       }
+
       Arrays.parallelSort(clusterCandidates);
    }
 
@@ -91,6 +96,17 @@ public class ABC
        * sort the candidates; so the best ones are at the beginning of the pool
        */
       Arrays.parallelSort(clusterCandidates);
+
+      int ii = 0;
+      while (ii < populationSize)
+      {
+         if (clusterCandidates[ii].equals(clusterCandidates[ii + 1]))
+         {
+            clusterCandidates[ii] = new ABCluster(classRefs, rdg, BIAS);
+         }
+
+         ii ++;
+      }
    }
 
    public static void main(String[] args) throws IOException
@@ -107,9 +123,6 @@ public class ABC
       logger.info("Class graph loaded in {}ms", (classLoadEndTimeNano - startTimeNano) / 1000000);
 
       // TODO: read input parameters
-      int POPULATION_SIZE = 1024;
-      int RUN_CYCLE_COUNT = 256;
-      double BIAS = 0.33;
 
       ABC abc = new ABC(allClasses.values(), BIAS, POPULATION_SIZE);
 

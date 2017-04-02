@@ -209,12 +209,12 @@ public class ABCluster implements Comparable<ABCluster>
          A.add(randomElement);
       }
 
-      int fast_A_to_B = A_to_B;
-      int fast_B_to_A = B_to_A;
-
       /*
        * enable for test
        *
+      int fast_A_to_B = A_to_B;
+      int fast_B_to_A = B_to_A;
+
       computeScores();
 
       assert fast_A_to_B == A_to_B;
@@ -226,5 +226,26 @@ public class ABCluster implements Comparable<ABCluster>
    public int compareTo(ABCluster other)
    {
       return getScore() - other.getScore();
+   }
+
+   @Override
+   public int hashCode()
+   {
+      return (A.hashCode() ^ B.hashCode());
+   }
+
+   @Override
+   public boolean equals(Object o)
+   {
+      if (o instanceof ABCluster)
+      {
+         ABCluster other = (ABCluster) o;
+
+         return A.equals(other.A) || A.equals(other.B);
+      }
+      else
+      {
+         return false;
+      }
    }
 }
