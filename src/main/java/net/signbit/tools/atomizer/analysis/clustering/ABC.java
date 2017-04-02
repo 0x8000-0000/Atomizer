@@ -42,6 +42,9 @@ public class ABC
    private static int POPULATION_SIZE = 1024;
    private static int RUN_CYCLE_COUNT = 256;
 
+   private static final double BIAS_MIN = 0.05;
+   private static final double BIAS_MAX = 0.45;
+
    public ABC(final Collection<ClassRef> classSet, int popSize)
    {
       rdg = new RandomDataGenerator();
@@ -68,7 +71,7 @@ public class ABC
       for (int ii = 0; ii < populationSize; ii ++)
       {
          // TODO: consider use a normally distributed bias
-         double bias = rdg.nextUniform(0, 1);
+         double bias = rdg.nextUniform(BIAS_MIN, BIAS_MAX);
          clusters[ii] = new ABCluster(classRefs, rdg, bias);
       }
       for (int ii = 0; ii < populationSize; ii ++)
@@ -117,15 +120,24 @@ public class ABC
        */
       Arrays.parallelSort(clusters);
 
-      /*
-       * eliminate duplicates
-       */
       int ii = 0;
       while (ii < populationSize)
       {
-         if (clusters[ii].equals(clusters[ii + 1]))
+         if (0 == clusters[ii].getScore())
          {
-            clusters[ii] = new ABCluster(classRefs, rdg, BIAS);
+            /*
+             * eliminate trivial clusters
+             */
+            double bias = rdg.nextUniform(BIAS_MIN, BIAS_MAX);
+            clusters[ii] = new ABCluster(classRefs, rdg, bias);
+         }
+         else if (clusters[ii].equals(clusters[ii + 1]))
+         {
+            /*
+             * eliminate duplicates
+             */
+            double bias = rdg.nextUniform(BIAS_MIN, BIAS_MAX);
+            clusters[ii] = new ABCluster(classRefs, rdg, bias);
          }
 
          ii ++;
@@ -149,7 +161,7 @@ public class ABC
       POPULATION_SIZE = Integer.valueOf(args[1]);
       RUN_CYCLE_COUNT = Integer.valueOf(args[2]);
 
-      ABC abc = new ABC(allClasses.values(), BIAS, POPULATION_SIZE);
+      ABC abc = new ABC(allClasses.values(), POPULATION_SIZE);
 
       final long clusterInitializationEndTimeNano = System.nanoTime();
       logger.info("Initial {} clusters created in in {}ms", POPULATION_SIZE, (clusterInitializationEndTimeNano - classLoadEndTimeNano) / 1000000);
@@ -178,11 +190,18 @@ public class ABC
          logger.info("Class step {} completed in {}ms; best score {}, worst score {}", ii, (stepEndTime - stepStartTime) / 1000000, bestScore, worstScore);
       }
 
-      FileWriter writer = new FileWriter(args[3]);
       StringBuilder sb = new StringBuilder();
-      sb.append("Best cluster: score ");
-      sb.append(abc.clusters[0]);
+      sb.append("Population size: ");
+      sb.append(POPULATION_SIZE);
       sb.append('\n');
+      sb.append("Cycles: ");
+      sb.append(RUN_CYCLE_COUNT);
+      sb.append('\n');
+      sb.append("Best cluster: score ");
+      sb.append(abc.clusters[0].getScore());
+      sb.append('\n');
+
+      FileWriter writer = new FileWriter(args[3]);
       writer.append(sb.toString());
       abc.clusters[0].writeTo(writer);
       writer.close();

@@ -302,32 +302,97 @@ public class ABCluster implements Comparable<ABCluster>
 
    public void writeTo(FileWriter writer) throws IOException
    {
+      HashSet<PackageRef> packagesInA = new HashSet<>();
       ArrayList<String> namesInA = new ArrayList<>(A.size());
       for (ClassRef cr: A)
       {
          namesInA.add(cr.getClassName());
+         packagesInA.add(cr.getPackage());
       }
       Collections.sort(namesInA);
 
+      HashSet<PackageRef> packagesInB = new HashSet<>();
       ArrayList<String> namesInB = new ArrayList<>(B.size());
       for (ClassRef cr: B)
       {
          namesInB.add(cr.getClassName());
+         packagesInB.add(cr.getPackage());
       }
       Collections.sort(namesInB);
 
-      writer.append("A: ");
+      StringBuilder headerA = new StringBuilder();
+      headerA.append("Cluster A: ");
+      headerA.append(packagesInA.size());
+      headerA.append(" packages and ");
+      headerA.append(namesInA.size());
+      headerA.append(" classes");
+      headerA.append('\n');
+      writer.append(headerA.toString());
+
       for (String name: namesInA)
       {
          writer.append(name);
          writer.append('\n');
       }
 
-      writer.append("B: ");
+      StringBuilder headerB = new StringBuilder();
+      headerB.append("Cluster B: ");
+      headerB.append(packagesInB.size());
+      headerB.append(" packages and ");
+      headerB.append(namesInB.size());
+      headerB.append(" classes");
+      headerB.append('\n');
+      writer.append(headerB.toString());
+
       for (String name: namesInB)
       {
          writer.append(name);
          writer.append('\n');
+      }
+
+      StringBuilder dependencies = new StringBuilder();
+      dependencies.append("\n\n-----\n");
+      if (A_to_B < B_to_A)
+      {
+         dependencies.append(A_to_B);
+         dependencies.append(" from A to B (versus ");
+         dependencies.append(B_to_A);
+         dependencies.append(")\n");
+         writer.append(dependencies.toString());
+         for (ClassRef cr: A)
+         {
+            for (ClassRef dep : cr.getDependencies())
+            {
+               if (B.contains(dep))
+               {
+                  writer.append(cr.getClassName());
+                  writer.append(" -> ");
+                  writer.append(dep.getClassName());
+                  dependencies.append('\n');
+               }
+            }
+         }
+      }
+      else
+      {
+         dependencies.append(B_to_A);
+         dependencies.append(" from B to A (versus ");
+         dependencies.append(A_to_B);
+         dependencies.append(")\n");
+         writer.append(dependencies.toString());
+         for (ClassRef cr: B)
+         {
+            for (ClassRef dep : cr.getDependencies())
+            {
+               if (A.contains(dep))
+               {
+                  writer.append(cr.getClassName());
+                  writer.append(" -> ");
+                  writer.append(dep.getClassName());
+                  dependencies.append('\n');
+               }
+            }
+         }
       }
    }
 
