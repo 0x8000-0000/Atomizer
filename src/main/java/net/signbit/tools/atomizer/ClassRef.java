@@ -38,9 +38,14 @@ public class ClassRef
 
    private String className;
 
+   /** Set of names of classes on which this class depends on */
    private HashSet<String> fullDependencySet;
 
-   private HashSet<ClassRef> resolvableDependencies;
+   /** Set of classes on which this class depends on, limited to input set */
+   private HashSet<ClassRef> dependsOn;
+
+   /** Set of classes that depend on this class, limited to input set */
+   private HashSet<ClassRef> isDependentOnBy;
 
    private int dependedOnByOutsidePackageCount = 0;
 
@@ -52,6 +57,9 @@ public class ClassRef
    {
       this.jarName = jarName;
       fullDependencySet = new HashSet<>();
+
+      dependsOn = new HashSet<>();
+      isDependentOnBy = new HashSet<>();
 
       ClassReader reader = new ClassReader(stream);
       ClassNode classNode = new ClassNode();
@@ -159,7 +167,12 @@ public class ClassRef
 
    public Set<ClassRef> getDependencies()
    {
-      return resolvableDependencies;
+      return dependsOn;
+   }
+
+   public Set<ClassRef> getReverseDependencies()
+   {
+      return isDependentOnBy;
    }
 
    /*
@@ -226,13 +239,13 @@ public class ClassRef
    {
       for (ClassRef cr : allClasses.values())
       {
-         cr.resolvableDependencies = new HashSet<>();
          for (String name : cr.getDependenciesClassNames())
          {
             ClassRef depClass = allClasses.get(name);
             if (null != depClass)
             {
-               cr.resolvableDependencies.add(depClass);
+               cr.dependsOn.add(depClass);
+               depClass.isDependentOnBy.add(cr);
                depClass.markDependedOn(cr);
             }
          }
