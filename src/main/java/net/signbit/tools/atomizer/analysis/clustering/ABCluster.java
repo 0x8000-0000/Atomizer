@@ -16,7 +16,10 @@
 
 package net.signbit.tools.atomizer.analysis.clustering;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 
 import org.apache.commons.math3.random.RandomDataGenerator;
@@ -246,6 +249,37 @@ public class ABCluster implements Comparable<ABCluster>
       else
       {
          return false;
+      }
+   }
+
+   public void writeTo(FileWriter writer) throws IOException
+   {
+      ArrayList<String> namesInA = new ArrayList<>(A.size());
+      for (ClassRef cr: A)
+      {
+         namesInA.add(cr.getClassName());
+      }
+      Collections.sort(namesInA);
+
+      ArrayList<String> namesInB = new ArrayList<>(B.size());
+      for (ClassRef cr: B)
+      {
+         namesInB.add(cr.getClassName());
+      }
+      Collections.sort(namesInB);
+
+      writer.append("A: ");
+      for (String name: namesInA)
+      {
+         writer.append(name);
+         writer.append('\n');
+      }
+
+      writer.append("B: ");
+      for (String name: namesInB)
+      {
+         writer.append(name);
+         writer.append('\n');
       }
    }
 }

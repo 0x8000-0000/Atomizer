@@ -16,6 +16,7 @@
 
 package net.signbit.tools.atomizer.analysis.clustering;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.zip.ZipFile;
@@ -33,7 +34,7 @@ public class ABC
 
    private final ArrayList<ClassRef> classRefs;
 
-   private ABCluster[] clusterCandidates;
+   private ABCluster[] clusters;
    private int populationSize;
 
    private RandomDataGenerator rdg;
@@ -64,19 +65,19 @@ public class ABC
        * initialize the population
        */
       populationSize = popSize;
-      clusterCandidates = new ABCluster[populationSize * 2];
+      clusters = new ABCluster[populationSize * 2];
       for (int ii = 0; ii < populationSize; ii ++)
       {
          // TODO: use a normally distributed bias
-         clusterCandidates[ii] = new ABCluster(classRefs, rdg, bias);
+         clusters[ii] = new ABCluster(classRefs, rdg, bias);
       }
       for (int ii = 0; ii < populationSize; ii ++)
       {
          int selector = rdg.nextInt(0, populationSize - 1);
-         clusterCandidates[populationSize + ii] = clusterCandidates[ii].mutate(classRefs.get(selector));
+         clusters[populationSize + ii] = clusters[ii].mutate(classRefs.get(selector));
       }
 
-      Arrays.parallelSort(clusterCandidates);
+      Arrays.parallelSort(clusters);
    }
 
    public void step()
@@ -89,20 +90,20 @@ public class ABC
       for (int ii = 0; ii < populationSize; ii ++)
       {
          int selector = rdg.nextInt(0, populationSize - 1);
-         clusterCandidates[populationSize + ii] = clusterCandidates[ii].mutate(classRefs.get(selector));
+         clusters[populationSize + ii] = clusters[ii].mutate(classRefs.get(selector));
       }
 
       /*
        * sort the candidates; so the best ones are at the beginning of the pool
        */
-      Arrays.parallelSort(clusterCandidates);
+      Arrays.parallelSort(clusters);
 
       int ii = 0;
       while (ii < populationSize)
       {
-         if (clusterCandidates[ii].equals(clusterCandidates[ii + 1]))
+         if (clusters[ii].equals(clusters[ii + 1]))
          {
-            clusterCandidates[ii] = new ABCluster(classRefs, rdg, BIAS);
+            clusters[ii] = new ABCluster(classRefs, rdg, BIAS);
          }
 
          ii ++;
@@ -123,11 +124,13 @@ public class ABC
       logger.info("Class graph loaded in {}ms", (classLoadEndTimeNano - startTimeNano) / 1000000);
 
       // TODO: read input parameters
+      POPULATION_SIZE = Integer.valueOf(args[1]);
+      RUN_CYCLE_COUNT = Integer.valueOf(args[2]);
 
       ABC abc = new ABC(allClasses.values(), BIAS, POPULATION_SIZE);
 
       final long clusterInitializationEndTimeNano = System.nanoTime();
-      logger.info("Initial clusters created in in {}ms", (clusterInitializationEndTimeNano - classLoadEndTimeNano) / 1000000);
+      logger.info("Initial {} clusters created in in {}ms", POPULATION_SIZE, (clusterInitializationEndTimeNano - classLoadEndTimeNano) / 1000000);
 
       for (int ii = 0; ii < RUN_CYCLE_COUNT; ii ++)
       {
@@ -135,10 +138,19 @@ public class ABC
          abc.step();
          final long stepEndTime = System.nanoTime();
 
-         int bestScore = abc.clusterCandidates[0].getScore();
-         int worstScore = abc.clusterCandidates[abc.populationSize - 1].getScore();
+         int bestScore = abc.clusters[0].getScore();
+         int worstScore = abc.clusters[abc.populationSize - 1].getScore();
 
          logger.info("Step {} completed in {}ms; best score {}, worst score {}", ii, (stepEndTime - stepStartTime) / 1000000, bestScore, worstScore);
       }
+
+      FileWriter writer = new FileWriter(args[3]);
+      StringBuilder sb = new StringBuilder();
+      sb.append("Best cluster: score ");
+      sb.append(abc.clusters[0]);
+      sb.append('\n');
+      writer.append(sb.toString());
+      abc.clusters[0].writeTo(writer);
+      writer.close();
    }
 }
