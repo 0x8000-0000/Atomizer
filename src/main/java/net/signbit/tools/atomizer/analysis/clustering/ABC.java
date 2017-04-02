@@ -17,10 +17,7 @@
 package net.signbit.tools.atomizer.analysis.clustering;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.math3.random.RandomDataGenerator;
@@ -36,7 +33,7 @@ public class ABC
 
    final private ArrayList<ClassRef> classRefs;
 
-   private ArrayList<ABCluster> clusterCandidates;
+   private ABCluster[] clusterCandidates;
    private int populationSize;
 
    private RandomDataGenerator rdg;
@@ -63,34 +60,37 @@ public class ABC
        * initialize the population
        */
       populationSize = popSize;
-      clusterCandidates = new ArrayList<>(populationSize * 2);
+      clusterCandidates = new ABCluster[populationSize * 2];
       for (int ii = 0; ii < populationSize; ii ++)
       {
-         clusterCandidates.add(new ABCluster(classRefs, rdg, bias));
+         // TODO: use a normally distributed bias
+         clusterCandidates[ii] = new ABCluster(classRefs, rdg, bias);
       }
       for (int ii = 0; ii < populationSize; ii ++)
       {
          int selector = rdg.nextInt(0, populationSize - 1);
-         clusterCandidates.add(populationSize + ii, clusterCandidates.get(ii).mutate(classRefs.get(selector)));
+         clusterCandidates[populationSize + ii] = clusterCandidates[ii].mutate(classRefs.get(selector));
       }
-      Collections.sort(clusterCandidates);
+      Arrays.parallelSort(clusterCandidates);
    }
 
    public void step()
    {
+      // TODO: use more CPUs
+
       /*
        * generate new population
        */
       for (int ii = 0; ii < populationSize; ii ++)
       {
          int selector = rdg.nextInt(0, populationSize - 1);
-         clusterCandidates.set(populationSize + ii, clusterCandidates.get(ii).mutate(classRefs.get(selector)));
+         clusterCandidates[populationSize + ii] = clusterCandidates[ii].mutate(classRefs.get(selector));
       }
 
       /*
        * sort the candidates; so the best ones are at the beginning of the pool
        */
-      Collections.sort(clusterCandidates);
+      Arrays.parallelSort(clusterCandidates);
    }
 
    public static void main(String[] args) throws IOException
@@ -122,8 +122,8 @@ public class ABC
          abc.step();
          final long stepEndTime = System.nanoTime();
 
-         int bestScore = abc.clusterCandidates.get(0).getScore();
-         int worstScore = abc.clusterCandidates.get(abc.populationSize - 1).getScore();
+         int bestScore = abc.clusterCandidates[0].getScore();
+         int worstScore = abc.clusterCandidates[abc.populationSize - 1].getScore();
 
          logger.info("Step {} completed in {}ms; best score {}, worst score {}", ii, (stepEndTime - stepStartTime) / 1000000, bestScore, worstScore);
       }
