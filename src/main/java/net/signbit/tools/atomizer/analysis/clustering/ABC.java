@@ -20,11 +20,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.zip.ZipFile;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.util.MathArrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.stream.Collectors.toList;
 
 import net.signbit.tools.atomizer.ClassRef;
 import net.signbit.tools.atomizer.PackageRef;
@@ -35,7 +38,7 @@ public class ABC
 
    private final ArrayList<ClassRef> classRefs;
 
-   private ABCluster[] clusters;
+   private ArrayList<ABCluster> clusters;
    private int populationSize;
 
    private RandomDataGenerator rdg;
@@ -68,20 +71,13 @@ public class ABC
        * initialize the population
        */
       populationSize = popSize;
-      clusters = new ABCluster[populationSize * 2];
+      clusters = new ArrayList<ABCluster>(populationSize);
       for (int ii = 0; ii < populationSize; ii ++)
       {
          // TODO: consider use a normally distributed bias
          double bias = rdg.nextUniform(BIAS_MIN, BIAS_MAX);
-         clusters[ii] = new ABCluster(classRefs, rdg, bias);
+         clusters.add(new ABCluster(classRefs, rdg, bias));
       }
-      for (int ii = 0; ii < populationSize; ii ++)
-      {
-         int selector = rdg.nextInt(0, classRefs.size() - 1);
-         clusters[populationSize + ii] = clusters[ii].mutate(classRefs.get(selector));
-      }
-
-      Arrays.parallelSort(clusters);
    }
 
    public void performBigStep()
@@ -92,10 +88,13 @@ public class ABC
       for (int ii = 0; ii < populationSize; ii++)
       {
          int selector = rdg.nextInt(0, classRefs.size() - 1);
-         clusters[populationSize + ii] = clusters[ii].mutateByPackage(classRefs.get(selector));
+         clusters.get(ii).scheduleElement(classRefs.get(selector));
       }
 
-      selectBestClusters();
+      Stream<ABCluster> mutatedElementsStream = clusters.parallelStream()
+         .map(ABCluster::mutateByPackageUsingScheduled);
+
+      selectBestClusters(mutatedElementsStream);
    }
 
    public void performStep()
@@ -108,37 +107,41 @@ public class ABC
       for (int ii = 0; ii < populationSize; ii++)
       {
          int selector = rdg.nextInt(0, classRefs.size() - 1);
-         clusters[populationSize + ii] = clusters[ii].mutate(classRefs.get(selector));
+         clusters.get(ii).scheduleElement(classRefs.get(selector));
       }
 
-      selectBestClusters();
+      Stream<ABCluster> mutatedElementsStream = clusters.parallelStream()
+            .map(ABCluster::mutateByClassUsingScheduled);
+
+      selectBestClusters(mutatedElementsStream);
    }
 
-   private void selectBestClusters()
+   private void selectBestClusters(Stream<ABCluster> mutatedElementsStream)
    {
-      /*
-       * sort the candidates; so the best ones are at the beginning of the pool
-       */
-      Arrays.parallelSort(clusters);
+      clusters = new ArrayList<>(Stream.concat(clusters.stream(), mutatedElementsStream)
+            .sorted()
+            .limit(POPULATION_SIZE)
+            .collect(toList()));
 
       int ii = 0;
-      while (ii < populationSize)
+      final int limit = populationSize - 1;
+      while (ii < limit)
       {
-         if (0 == clusters[ii].getScore())
+         if (0 == clusters.get(ii).getScore())
          {
             /*
              * eliminate trivial clusters
              */
             double bias = rdg.nextUniform(BIAS_MIN, BIAS_MAX);
-            clusters[ii] = new ABCluster(classRefs, rdg, bias);
+            clusters.set(ii, new ABCluster(classRefs, rdg, bias));
          }
-         else if (clusters[ii].equals(clusters[ii + 1]))
+         else if (clusters.get(ii).equals(clusters.get(ii + 1)))
          {
             /*
              * eliminate duplicates
              */
             double bias = rdg.nextUniform(BIAS_MIN, BIAS_MAX);
-            clusters[ii] = new ABCluster(classRefs, rdg, bias);
+            clusters.set(ii, new ABCluster(classRefs, rdg, bias));
          }
 
          ii ++;
@@ -175,8 +178,8 @@ public class ABC
          abc.performBigStep();
          final long stepEndTime = System.nanoTime();
 
-         int bestScore = abc.clusters[0].getScore();
-         int worstScore = abc.clusters[abc.populationSize - 1].getScore();
+         int bestScore = abc.clusters.get(0).getScore();
+         int worstScore = abc.clusters.get(abc.populationSize - 1).getScore();
 
          logger.info("Package step {} completed in {}ms; best score {}, worst score {}", ii, (stepEndTime - stepStartTime) / 1000000, bestScore, worstScore);
       }
@@ -187,8 +190,8 @@ public class ABC
          abc.performStep();
          final long stepEndTime = System.nanoTime();
 
-         int bestScore = abc.clusters[0].getScore();
-         int worstScore = abc.clusters[abc.populationSize - 1].getScore();
+         int bestScore = abc.clusters.get(0).getScore();
+         int worstScore = abc.clusters.get(abc.populationSize - 1).getScore();
 
          logger.info("Class step {} completed in {}ms; best score {}, worst score {}", ii, (stepEndTime - stepStartTime) / 1000000, bestScore, worstScore);
       }
@@ -201,12 +204,12 @@ public class ABC
       sb.append(RUN_CYCLE_COUNT);
       sb.append('\n');
       sb.append("Best cluster: score ");
-      sb.append(abc.clusters[0].getScore());
+      sb.append(abc.clusters.get(0).getScore());
       sb.append('\n');
 
       FileWriter writer = new FileWriter(args[3]);
       writer.append(sb.toString());
-      abc.clusters[0].writeTo(writer);
+      abc.clusters.get(0).writeTo(writer);
       writer.close();
    }
 }

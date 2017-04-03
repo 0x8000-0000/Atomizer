@@ -38,6 +38,7 @@ public class ABCluster implements Comparable<ABCluster>
 
    private int A_to_A;
    private int B_to_B;
+   private ClassRef scheduledElement;
 
    public ABCluster(ArrayList<ClassRef> classSet, RandomDataGenerator rdg, double bias)
    {
@@ -226,6 +227,16 @@ public class ABCluster implements Comparable<ABCluster>
       */
    }
 
+   public ABCluster mutateByPackageUsingScheduled()
+   {
+      return mutateByPackage(scheduledElement);
+   }
+
+   public ABCluster mutateByClassUsingScheduled()
+   {
+      return mutate(scheduledElement);
+   }
+
    public ABCluster mutateByPackage(ClassRef classRef)
    {
       ABCluster newCluster = new ABCluster(this);
@@ -396,4 +407,8 @@ public class ABCluster implements Comparable<ABCluster>
       }
    }
 
+   public void scheduleElement(ClassRef classRef)
+   {
+      scheduledElement = classRef;
+   }
 }
