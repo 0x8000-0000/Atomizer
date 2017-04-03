@@ -368,7 +368,7 @@ public class ABCluster implements Comparable<ABCluster>
                   writer.append(cr.getClassName());
                   writer.append(" -> ");
                   writer.append(dep.getClassName());
-                  dependencies.append('\n');
+                  writer.append('\n');
                }
             }
          }
@@ -389,7 +389,7 @@ public class ABCluster implements Comparable<ABCluster>
                   writer.append(cr.getClassName());
                   writer.append(" -> ");
                   writer.append(dep.getClassName());
-                  dependencies.append('\n');
+                  writer.append('\n');
                }
             }
          }
