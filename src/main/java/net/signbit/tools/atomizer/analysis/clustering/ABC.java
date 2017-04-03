@@ -77,7 +77,7 @@ public class ABC
       }
       for (int ii = 0; ii < populationSize; ii ++)
       {
-         int selector = rdg.nextInt(0, populationSize - 1);
+         int selector = rdg.nextInt(0, classRefs.size() - 1);
          clusters[populationSize + ii] = clusters[ii].mutate(classRefs.get(selector));
       }
 
@@ -91,7 +91,7 @@ public class ABC
        */
       for (int ii = 0; ii < populationSize; ii++)
       {
-         int selector = rdg.nextInt(0, populationSize - 1);
+         int selector = rdg.nextInt(0, classRefs.size() - 1);
          clusters[populationSize + ii] = clusters[ii].mutateByPackage(classRefs.get(selector));
       }
 
@@ -107,7 +107,7 @@ public class ABC
        */
       for (int ii = 0; ii < populationSize; ii++)
       {
-         int selector = rdg.nextInt(0, populationSize - 1);
+         int selector = rdg.nextInt(0, classRefs.size() - 1);
          clusters[populationSize + ii] = clusters[ii].mutate(classRefs.get(selector));
       }
 
