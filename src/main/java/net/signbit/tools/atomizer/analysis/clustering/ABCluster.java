@@ -287,7 +287,57 @@ public class ABCluster implements Comparable<ABCluster>
    @Override
    public int compareTo(ABCluster other)
    {
-      return getScore() - other.getScore();
+      if (A.equals(other.A) || A.equals(other.B))
+      {
+         return 0;
+      }
+      else
+      {
+         final int deltaScore = getScore() - other.getScore();
+         if (0 == deltaScore)
+         {
+            final int myMaxCohesion = Math.max(A_to_A, B_to_B);
+            final int otherMaxCohesion = Math.max(other.A_to_A, other.B_to_B);
+
+            final int deltaCohesion = otherMaxCohesion - myMaxCohesion;
+            if (0 == deltaCohesion)
+            {
+               final int sizeA = A.size();
+               final int sizeB = B.size();
+               final int otherSizeA = other.A.size();
+               final int otherSizeB = other.B.size();
+
+               final int myDeltaSize = Math.abs(sizeA - sizeB);
+               final int otherDeltaSize = Math.abs(otherSizeA - otherSizeB);
+
+               final int deltaDeltaSize = myDeltaSize - otherDeltaSize;
+               if (0 == deltaDeltaSize)
+               {
+                  final int mySmallerSize = Math.min(sizeA, sizeB);
+                  final int otherSmallerSize = Math.min(otherSizeA, otherSizeB);
+
+                  return (mySmallerSize - otherSmallerSize);
+               }
+               else
+               {
+                  return deltaDeltaSize;
+               }
+            }
+            else
+            {
+               return deltaCohesion;
+            }
+         }
+         else
+         {
+            return deltaScore;
+         }
+      }
+   }
+
+   public boolean isDegenerate()
+   {
+      return (A.isEmpty() || B.isEmpty());
    }
 
    @Override
@@ -330,6 +380,38 @@ public class ABCluster implements Comparable<ABCluster>
          packagesInB.add(cr.getPackage());
       }
       Collections.sort(namesInB);
+
+      StringBuilder overallHeader = new StringBuilder();
+      overallHeader.append("Packages: ");
+
+      HashSet<PackageRef> packagesOnlyInA = new HashSet<>(packagesInA);
+      packagesOnlyInA.removeAll(packagesInB);
+      overallHeader.append(packagesOnlyInA.size());
+      overallHeader.append(" only in A, ");
+
+      HashSet<PackageRef> commonPackages = new HashSet<>(packagesInA);
+      commonPackages.retainAll(packagesInB);
+      overallHeader.append(commonPackages.size());
+      overallHeader.append(" are common, ");
+
+      HashSet<PackageRef> packagesOnlyInB = new HashSet<>(packagesInB);
+      packagesOnlyInB.removeAll(packagesInA);
+      overallHeader.append(packagesOnlyInB.size());
+      overallHeader.append(" only in B\n");
+      writer.append(overallHeader.toString());
+
+      for (PackageRef pr: packagesOnlyInA)
+      {
+         writer.append("   A: ");
+         writer.append(pr.getName());
+         writer.append('\n');
+      }
+      for (PackageRef pr: packagesOnlyInB)
+      {
+         writer.append("   B: ");
+         writer.append(pr.getName());
+         writer.append('\n');
+      }
 
       StringBuilder headerA = new StringBuilder();
       headerA.append("Cluster A: ");

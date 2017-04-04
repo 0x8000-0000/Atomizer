@@ -19,8 +19,8 @@ package net.signbit.tools.atomizer.analysis.clustering;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
-import java.util.zip.ZipFile;
 import java.util.stream.Stream;
+import java.util.zip.ZipFile;
 
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.util.MathArrays;
@@ -41,6 +41,8 @@ public class ABC
    private ArrayList<ABCluster> clusters;
    private int populationSize;
 
+   private HashSet<ABCluster> disconnectedSets;
+
    private RandomDataGenerator rdg;
 
    private static int POPULATION_SIZE = 1024;
@@ -57,6 +59,8 @@ public class ABC
        * shuffle the input class set and store in classRefs
        */
       ArrayList<ClassRef> support = new ArrayList<>(classSet);
+
+      disconnectedSets = new HashSet<>();
 
       int[] indices = MathArrays.sequence(classSet.size(), 0, 1);
       MathArrays.shuffle(indices);
@@ -91,8 +95,8 @@ public class ABC
          clusters.get(ii).scheduleElement(classRefs.get(selector));
       }
 
-      Stream<ABCluster> mutatedElementsStream = clusters.parallelStream()
-         .map(ABCluster::mutateByPackageUsingScheduled);
+      Stream<ABCluster> mutatedElementsStream =
+            clusters.parallelStream().map(ABCluster::mutateByPackageUsingScheduled);
 
       selectBestClusters(mutatedElementsStream);
    }
@@ -127,11 +131,22 @@ public class ABC
       final int limit = populationSize - 1;
       while (ii < limit)
       {
-         if (0 == clusters.get(ii).getScore())
+         if (clusters.get(ii).isDegenerate())
          {
             /*
              * eliminate trivial clusters
              */
+            double bias = rdg.nextUniform(BIAS_MIN, BIAS_MAX);
+            clusters.set(ii, new ABCluster(classRefs, rdg, bias));
+         }
+         else if (0 == clusters.get(ii).getScore())
+         {
+            /*
+             * found two non-connected components; need to extract the
+             * smaller one, and continue cleaving the bigger component
+             */
+            disconnectedSets.add(clusters.get(ii));
+
             double bias = rdg.nextUniform(BIAS_MIN, BIAS_MAX);
             clusters.set(ii, new ABCluster(classRefs, rdg, bias));
          }
@@ -200,16 +215,29 @@ public class ABC
       sb.append("Population size: ");
       sb.append(POPULATION_SIZE);
       sb.append('\n');
+
       sb.append("Cycles: ");
       sb.append(RUN_CYCLE_COUNT);
       sb.append('\n');
+
+      sb.append("Number of distinct disconnected clusters: ");
+      sb.append(abc.disconnectedSets.size());
+      sb.append('\n');
+
       sb.append("Best cluster: score ");
       sb.append(abc.clusters.get(0).getScore());
       sb.append('\n');
 
       FileWriter writer = new FileWriter(args[3]);
       writer.append(sb.toString());
-      abc.clusters.get(0).writeTo(writer);
+      for (int ii = 0; ii < 5; ii ++)
+      {
+         writer.append("Cluster #");
+         writer.append(Integer.toString(ii));
+         writer.append('\n')
+         abc.clusters.get(ii).writeTo(writer);
+         writer.append("----------------------------");
+      }
       writer.close();
    }
 }
